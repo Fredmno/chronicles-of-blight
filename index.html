@@ -3,20 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Chronicles of Blight</title>
+  <title>Playable Novel - The Living Chapter</title>
   <style>
     :root {
       --bg: #120F1D;
       --card: #1B162B;
       --accent: #8B5CF6;
+      --accent-glow: rgba(139, 92, 246, 0.4);
+      --danger: #F43F5E;
       --text: #F8F7FC;
-      --text-muted: #9CA3AF;
+      --text-muted: #A1A1AA;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Georgia, serif;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -25,158 +27,328 @@
       max-width: 480px;
       margin: 0 auto;
     }
-    /* Meters */
-    .meters {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      width: 100%;
-      margin-bottom: 20px;
-    }
-    .meter {
-      background: var(--card);
-      border-radius: 10px;
-      padding: 8px 4px;
-      text-align: center;
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-    .meter-icon { font-size: 1.2rem; }
-    .bar-bg { background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; margin-top: 6px; overflow: hidden; }
-    .bar-fill { height: 100%; background: var(--accent); transition: width 0.3s; }
-    
-    /* Card Stage */
-    .card-stage {
-      flex: 1;
-      width: 100%;
+
+    /* Top HUD / Inventory */
+    .hud {
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      box-shadow: 0 12px 32px rgba(0,0,0,0.5);
-      border-radius: 20px;
       width: 100%;
-      padding: 24px 20px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-    }
-    .avatar { font-size: 4rem; margin-bottom: 8px; }
-    .card-title { font-size: 1.1rem; font-weight: 700; color: var(--accent); }
-    .card-text { font-size: 0.95rem; color: var(--text-muted); line-height: 1.4; }
-    
-    /* Choice Buttons */
-    .choices {
-      display: flex;
-      gap: 12px;
-      width: 100%;
-      margin-top: 20px;
-    }
-    .choice-btn {
-      flex: 1;
       background: var(--card);
-      border: 1px solid rgba(139, 92, 246, 0.4);
-      color: var(--text);
-      padding: 14px 10px;
-      border-radius: 12px;
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      font-family: -apple-system, sans-serif;
       font-size: 0.85rem;
       font-weight: 600;
+    }
+    .hud-stat { display: flex; align-items: center; gap: 6px; }
+    .inventory { color: var(--accent); cursor: pointer; text-decoration: underline; }
+
+    /* Book Stage */
+    .book-card {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 24px 20px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex: 1;
+    }
+    .chapter-tag {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      font-weight: 700;
+      font-family: -apple-system, sans-serif;
+    }
+    .story-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.3;
+      color: #fff;
+    }
+    .story-body {
+      font-size: 1rem;
+      line-height: 1.65;
+      color: #E4E4E7;
+      min-height: 120px;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Choices Tray */
+    .choices {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 14px;
+      width: 100%;
+    }
+    .choice-btn {
+      background: rgba(18, 15, 29, 0.6);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: var(--text);
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      text-align: left;
+      font-family: -apple-system, sans-serif;
+      font-weight: 500;
       cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       transition: all 0.15s ease;
     }
-    .choice-btn:active { background: var(--accent); transform: scale(0.96); }
-    .days { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; }
+    .choice-btn:active {
+      transform: scale(0.97);
+      background: rgba(139, 92, 246, 0.2);
+    }
+    .choice-btn.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+      border-color: rgba(255,255,255,0.05);
+    }
+    .choice-tag {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.05);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    /* Dice Check Modal */
+    .dice-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(6px);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .dice-box {
+      background: var(--card);
+      border: 1px solid var(--accent);
+      border-radius: 20px;
+      padding: 24px;
+      text-align: center;
+      max-width: 320px;
+      width: 100%;
+      box-shadow: 0 0 24px var(--accent-glow);
+    }
+    .d20 {
+      font-size: 3.5rem;
+      margin: 16px 0;
+      display: inline-block;
+      cursor: pointer;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
   </style>
 </head>
 <body>
-  <div class="days" id="days">Days Survived: 1</div>
 
-  <div class="meters">
-    <div class="meter"><span class="meter-icon">⚔️</span><div class="bar-bg"><div class="bar-fill" id="m0" style="width:50%"></div></div></div>
-    <div class="meter"><span class="meter-icon">🪙</span><div class="bar-bg"><div class="bar-fill" id="m1" style="width:50%"></div></div></div>
-    <div class="meter"><span class="meter-icon">🕯️</span><div class="bar-bg"><div class="bar-fill" id="m2" style="width:50%"></div></div></div>
-    <div class="meter"><span class="meter-icon">👥</span><div class="bar-bg"><div class="bar-fill" id="m3" style="width:50%"></div></div></div>
+  <!-- Top HUD -->
+  <div class="hud">
+    <div class="hud-stat">❤️ <span id="hp">20</span>/20</div>
+    <div class="hud-stat">🪙 <span id="gold">15</span></div>
+    <div class="inventory" id="invBtn">Bag (<span id="invCount">1</span>)</div>
   </div>
 
-  <div class="card-stage">
-    <div class="card" id="card">
-      <div class="avatar" id="avatar">🧙‍♂️</div>
-      <div class="card-title" id="title">Court Diviner</div>
-      <div class="card-text" id="desc">"The spirits warn of famine. Should we drain the treasury to bless the crops?"</div>
+  <!-- Book Stage -->
+  <div class="book-card">
+    <div class="chapter-tag" id="chapterTag">Prologue</div>
+    <div class="story-title" id="storyTitle">The Balete Gate</div>
+    <div class="story-body" id="storyText">Loading story...</div>
+    <div class="choices" id="choicesBox"></div>
+  </div>
+
+  <!-- Dice Modal -->
+  <div class="dice-modal" id="diceModal">
+    <div class="dice-box">
+      <h3 style="color:var(--accent);">Skill Check</h3>
+      <p id="diceDesc" style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">Target: 10+</p>
+      <div class="d20" id="diceIcon">🎲</div>
+      <p id="diceResult" style="font-weight:600; min-height:20px;"></p>
+      <button class="choice-btn" id="diceContinue" style="display:none; justify-content:center; margin-top:12px;">Continue</button>
     </div>
   </div>
 
-  <div class="choices">
-    <button class="choice-btn" id="leftBtn">Bless Crops</button>
-    <button class="choice-btn" id="rightBtn">Refuse</button>
-  </div>
-
   <script>
-    let stats = [50, 50, 50, 50]; // Might, Coin, Spirit, People
-    let day = 1;
+    // Player State
+    let player = {
+      hp: 20,
+      gold: 15,
+      items: ["Ancient Dagger"]
+    };
 
-    const DECK = [
-      {
-        avatar: "🧙‍♂️", title: "Court Diviner", text: "The river spirits demand a tithe for bountiful harvest.",
-        left: { text: "Pay Tithe", mod: [0, -15, +20, +10] },
-        right: { text: "Ignore Spirits", mod: [0, +10, -20, -10] }
+    // Story Graph
+    const STORY = {
+      start: {
+        chapter: "Chapter I",
+        title: "The Iron Gate of the Ruins",
+        text: "The evening mist rolls across the obsidian archway. An ancient Balete tree wraps its gnarled roots around a heavy rusted iron door. A guardian automaton stands half-buried in vines, its mechanical eye faintly flickering amber.",
+        choices: [
+          { text: "Examine the sleeping automaton", target: "examine_robot" },
+          { text: "Search the mossy roots for a way in", target: "search_roots" },
+          { text: "Force the rusted door open", check: { target: 12, stat: "Strength", success: "door_open", fail: "door_fail" } }
+        ]
       },
-      {
-        avatar: "🛡️", title: "General", text: "Bandits roam the outer provinces. Send the legion?",
-        left: { text: "Send Legion", mod: [-10, -10, 0, +20] },
-        right: { text: "Leave Them", mod: [+10, +5, 0, -20] }
+      examine_robot: {
+        chapter: "Chapter I",
+        title: "The Ancient Guardian",
+        text: "You step closer. The guardian clicks softly. In its bronze fist, it holds a gleaming Brass Key, but its chest furnace is cooling. You could ignite it with a flame or attempt to pry the key loose.",
+        choices: [
+          { text: "Pry the key free quietly", check: { target: 10, stat: "Agility", success: "get_key", fail: "wake_robot" } },
+          { text: "Back away and inspect the roots", target: "search_roots" }
+        ]
       },
-      {
-        avatar: "🧝‍♀️", title: "Alchemist", text: "I discovered a volatile powder that could fortify weapons.",
-        left: { text: "Fund Project", mod: [+20, -20, 0, 0] },
-        right: { text: "Too Dangerous", mod: [-5, 0, +10, 0] }
+      search_roots: {
+        chapter: "Chapter I",
+        title: "The Hollow Root",
+        text: "Hidden beneath overgrown vines, you discover a leather satchel left by a long-dead scout. Inside, you find 10 gold coins and a flask of Alchemical Oil.",
+        onEnter: () => {
+          if (!player.items.includes("Alchemical Oil")) {
+            player.gold += 10;
+            player.items.push("Alchemical Oil");
+          }
+        },
+        choices: [
+          { text: "Use oil to loosen the door hinges", reqItem: "Alchemical Oil", target: "door_open" },
+          { text: "Return to the gate entrance", target: "start" }
+        ]
       },
-      {
-        avatar: "👑", title: "Merchant Guild", text: "Lower trade tariffs, and we will share our foreign riches.",
-        left: { text: "Lower Tariffs", mod: [-5, +25, 0, -10] },
-        right: { text: "Keep High Taxes", mod: [0, -10, 0, +15] }
+      get_key: {
+        chapter: "Chapter I",
+        title: "The Brass Key",
+        text: "With steady fingers, you slip the Brass Key from its grip. The automaton hums peacefully without stirring.",
+        onEnter: () => {
+          if (!player.items.includes("Brass Key")) player.items.push("Brass Key");
+        },
+        choices: [
+          { text: "Unlock the Iron Gate", reqItem: "Brass Key", target: "door_open" }
+        ]
+      },
+      wake_robot: {
+        chapter: "Chapter I",
+        title: "Combat!",
+        text: "Clang! Your dagger slips. The automaton's eye turns furious red! A blast of steam erupts, singing your arm for 5 damage before shutting down again.",
+        onEnter: () => {
+          player.hp -= 5;
+        },
+        choices: [
+          { text: "Recover and pry the key loose", target: "get_key" }
+        ]
+      },
+      door_fail: {
+        chapter: "Chapter I",
+        title: "Strained Might",
+        text: "You throw your shoulder against the iron door. The metal groans, but doesn't budge. You bruise your shoulder for 2 damage.",
+        onEnter: () => { player.hp -= 2; },
+        choices: [
+          { text: "Step back and rethink your approach", target: "start" }
+        ]
+      },
+      door_open: {
+        chapter: "Chapter II",
+        title: "Into the Underworld",
+        text: "With a grinding shudder, the ancient portal opens inward. A spiral staircase descends into the glowing bioluminescent depths of the forgotten catacombs. Your quest has truly begun.",
+        choices: [
+          { text: "Descend into the darkness... [To be continued]", target: "start" }
+        ]
       }
-    ];
+    };
 
-    let currentCard = DECK[0];
+    let currentNode = "start";
 
-    function update() {
-      document.getElementById('days').innerText = `Days Survived: ${day}`;
-      for (let i = 0; i < 4; i++) {
-        document.getElementById(`m${i}`).style.width = `${Math.max(0, Math.min(100, stats[i]))}%`;
-      }
+    function updateUI() {
+      document.getElementById("hp").innerText = player.hp;
+      document.getElementById("gold").innerText = player.gold;
+      document.getElementById("invCount").innerText = player.items.length;
 
-      for (let s of stats) {
-        if (s <= 0 || s >= 100) {
-          alert(`Your journey ends! Survived ${day} days.`);
-          stats = [50, 50, 50, 50];
-          day = 1;
+      const node = STORY[currentNode];
+      if (node.onEnter) node.onEnter();
+
+      document.getElementById("chapterTag").innerText = node.chapter;
+      document.getElementById("storyTitle").innerText = node.title;
+      document.getElementById("storyText").innerText = node.text;
+
+      const box = document.getElementById("choicesBox");
+      box.innerHTML = "";
+
+      node.choices.forEach(ch => {
+        const btn = document.createElement("button");
+        btn.className = "choice-btn";
+        
+        let isLocked = false;
+        let tag = "";
+
+        if (ch.reqItem && !player.items.includes(ch.reqItem)) {
+          isLocked = true;
+          tag = `Requires ${ch.reqItem}`;
+          btn.classList.add("disabled");
+        } else if (ch.check) {
+          tag = `Roll D20 (${ch.check.target}+)`;
         }
-      }
 
-      currentCard = DECK[Math.floor(Math.random() * DECK.length)];
-      document.getElementById('avatar').innerText = currentCard.avatar;
-      document.getElementById('title').innerText = currentCard.title;
-      document.getElementById('desc').innerText = currentCard.text;
-      document.getElementById('leftBtn').innerText = currentCard.left.text;
-      document.getElementById('rightBtn').innerText = currentCard.right.text;
+        btn.innerHTML = `<span>${ch.text}</span> ${tag ? `<span class="choice-tag">${tag}</span>` : ''}`;
+
+        btn.onclick = () => {
+          if (ch.check) {
+            triggerDiceCheck(ch.check);
+          } else {
+            currentNode = ch.target;
+            updateUI();
+          }
+        };
+
+        box.appendChild(btn);
+      });
     }
 
-    function choose(choice) {
-      for (let i = 0; i < 4; i++) stats[i] += choice.mod[i];
-      day++;
-      update();
+    // Dice Check Logic
+    function triggerDiceCheck(check) {
+      const modal = document.getElementById("diceModal");
+      const icon = document.getElementById("diceIcon");
+      const result = document.getElementById("diceResult");
+      const continueBtn = document.getElementById("diceContinue");
+      
+      modal.style.display = "flex";
+      result.innerText = "Tap the D20 to roll!";
+      continueBtn.style.display = "none";
+
+      icon.onclick = () => {
+        icon.onclick = null;
+        let roll = Math.floor(Math.random() * 20) + 1;
+        icon.innerText = roll;
+
+        const success = roll >= check.target;
+        result.innerText = success ? `Success! (Rolled ${roll} vs ${check.target})` : `Failed! (Rolled ${roll} vs ${check.target})`;
+        result.style.color = success ? "var(--accent)" : "var(--danger)";
+        
+        continueBtn.style.display = "flex";
+        continueBtn.onclick = () => {
+          modal.style.display = "none";
+          icon.innerText = "🎲";
+          currentNode = success ? check.success : check.fail;
+          updateUI();
+        };
+      };
     }
 
-    document.getElementById('leftBtn').onclick = () => choose(currentCard.left);
-    document.getElementById('rightBtn').onclick = () => choose(currentCard.right);
+    document.getElementById("invBtn").onclick = () => {
+      alert("Inventory Items:\n• " + player.items.join("\n• "));
+    };
 
-    update();
+    updateUI();
   </script>
 </body>
 </html>
